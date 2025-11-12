@@ -1,18 +1,24 @@
-import os
 from flask import Flask
 import redis
+import os
 
 app = Flask(__name__)
 
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+# חיבור ל-Redis לפי שם השירות בקומפוז
+redis_host = os.getenv("REDIS_HOST", "redis")
+redis_port = int(os.getenv("REDIS_PORT", 6379))
+r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
-r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
-
-@app.route("/")
+@app.route('/')
 def index():
-    count = r.incr("hits")
-    return f"Hello from Flask + Redis! This page was visited {count} times."
+    # ננסה לספור כמה פעמים ביקרו בעמוד
+    count = r.incr('visits')
+    return f"Hello from Flask! You visited this page {count} times."
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+@app.route('/reset')
+def reset():
+    r.delete('visits')
+    return "Counter reset successfully!"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True)
